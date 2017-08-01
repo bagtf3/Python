@@ -8,6 +8,7 @@ import csv
 import pickle
 from Robinhood import Robinhood
 import os.path
+# You will also need the function on trade_history_helpers.py
 
 usr = "username"
 psw = "password"

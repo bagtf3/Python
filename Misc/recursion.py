@@ -1,3 +1,6 @@
+# some random functions implemented in functional programming style, just for 
+# educational purposes.
+
 def mymax(a, b):
     if (a >= b):
         return a
@@ -23,7 +26,9 @@ def isSorted(l):
     
     else:
         return False        
-    
+ 
+# hits recursion limit if the list is badly out of sort or has too many elements.
+
 def slowSort(l):
     if isSorted(l):
         return l
@@ -34,6 +39,8 @@ def slowSort(l):
     else:
         return list(slowSort(l[1:] + [l[0]]))
 
+#https://stackoverflow.com/questions/4574279/sorting-in-functional-programming-languages
+#merge sort from above
 def merge(a, b):
     if len(a) == 0:
         return b

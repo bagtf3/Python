@@ -1,6 +1,11 @@
 ## This script will use the trade_history_helpers to obtain a
 ## Robinhood accounts past profit and losses on all orders.
 ## output is a .csv sent to wherever the path variable points.
+import json
+import csv
+import pickle
+from Robinhood import Robinhood
+import os.path
 
 usr = "username"
 psw = "password"
@@ -31,11 +36,15 @@ for key, value in lookup.iteritems():
 held_orders = [o for o in orders if o['symbol'] in held_lookup.keys()]
 held_symbols = list(set(o['symbol'] for o in held_orders))
 
+## now with divs
+divs = rb.dividends()['results']
+divs_paid = [extract_hash(d) for d in divs]
+
 pl = []
 
 for a in all_symbols:
     #get all positions pertaining to the current symbol, a
-    pos = next(p for p in positions if p['instrument'].split("/")[4] == a)
+    pos = next(p for p in positions if extract_hash(p) == a)
     relevant_orders = [o for o in orders if o['symbol'] == a and o['state'] == 'filled']
     symbol = lookup[a]
     
@@ -51,43 +60,33 @@ for a in all_symbols:
         
         unrealizedPL = total_equity - total_cost
         
-        total = 0.00
-        for r in relevant_orders:
-        
-            if r['side'] == 'sell':
-                total= total + float(str(r['price'])) * float(str(r['shares']))
-            
-            if r['side'] == 'buy':
-                total= total - float(str(r['price'])) * float(str(r['shares']))
+        total = get_totals(relevant_orders)
         
         totalPL = total + total_equity
         realizedPL = totalPL - unrealizedPL
     
-        pl.append({'symbol': symbol , 'realized': round(realizedPL, 3), "unrealized": round(unrealizedPL, 3),\
-               "total":round(totalPL,3)})
-    
     else:
         
         unrealizedPL = 0.0
-    
-        total = 0.00
-        for r in relevant_orders:
         
-            if r['side'] == 'sell':
-                total= total + float(str(r['price'])) * float(str(r['shares']))
-                
-            if r['side'] == 'buy':
-                total= total - float(str(r['price'])) * float(str(r['shares']))
+        total = get_totals(relevant_orders)
         
         realizedPL = total
         totalPL = realizedPL
         
-        pl.append({'symbol': symbol , 'realized': round(realizedPL, 3), "unrealized": round(unrealizedPL, 3),\
-                   "total":round(totalPL,3)})
-
+    #now do the dividends
+    if a in divs_paid:
+        div = sum([float(d['amount']) for d in divs if extract_hash(d) == a])
+    else:
+        div = 0.0
+    
+    sec = security(symbol, realizedPL, unrealizedPL, totalPL, div)
+    pl.append(sec.info())
+    
+    
 #write it out
 ff = path + 'all_pl.csv'
-keys = ['symbol', 'realized', 'unrealized', 'total']
+keys = ['symbol', 'realized', 'unrealized', "div", 'total', "total_w_div"]
 with open(ff, 'w') as output_file:
     dict_writer = csv.DictWriter(output_file, delimiter = ",", lineterminator = "\n", fieldnames = keys)
     dict_writer.writeheader()

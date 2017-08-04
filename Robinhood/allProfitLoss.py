@@ -42,7 +42,7 @@ for a in all_symbols:
     #if we are holding this symbol
     if a in held_lookup.keys():
         
-        current_price = float(rb.quote_data(a)['bid_price'])
+        current_price = float(rb.last_trade_price(a))
         quantity = float(pos['quantity'])
         avg_price = float(pos['average_buy_price'])
         

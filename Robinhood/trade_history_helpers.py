@@ -1,12 +1,29 @@
 #These are from https://github.com/Jamonek/Robinhood with slight modifications.
 
 #Trade history and profit loss helper functions.
+class security:
+    def __init__(self, symbol, rpl, upl, total, div): 
+        self.symbol = symbol
+        self.rpl = round(rpl, 3)
+        self.upl = round(upl, 3)
+        self.total = round(total, 3)
+        self.div = round(div, 3)
+    
+    def info(self):
+        d = {"symbol": self.symbol, "realized":self.rpl, "unrealized":self.upl, \
+        "total": self.total, "div":self.div, 'total_w_div': self.total + self.div}
+        
+        return d   
+
+def extract_hash(d):
+    return d['instrument'].split("/")[4] 
+
 def fetch_json_by_url(rb_client, url):
     return rb_client.session.get(url).json()
 
 def order_item_info(order, rb_client):
     #We want to extract the hashed symbol from the RH API
-    symbol = order['instrument'].split("/")[4]
+    symbol = extract_hash(order)
     
     return {
         'side': order['side'],
@@ -32,6 +49,19 @@ def get_all_history_orders(rb_client):
 def change_symbol(order, hashed, symbol):
     if order['symbol'] == hashed:
         order['symbol'] = symbol
+             
+def get_totals(ro):
+    total = 0.0
+    #loop through the relevant orders and get the totals for buys/sells
+    for r in relevant_orders:
+        if r['side'] == 'sell':
+            total= total + float(str(r['price'])) * float(str(r['shares']))
+        
+        if r['side'] == 'buy':
+            total= total - float(str(r['price'])) * float(str(r['shares']))
+    
+    return total
+
 ##
 ##
 ##
